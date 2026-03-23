@@ -1,0 +1,7 @@
+@ECHO OFF
+CLS
+SETLOCAL ENABLEDELAYEDEXPANSION
+
+python %~dp0\skycards_converter.py
+PAUSE
+EXIT /B 0
