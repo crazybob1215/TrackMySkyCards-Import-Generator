@@ -23,15 +23,15 @@ If you encounter any errors, see the [Troubleshooting](#troubleshooting) section
 
 ## SkyStats Registrations Export
 1. Follow the instructions for the skycards-export tool to get your "skycards_user.json" file.
-2. Go to SkyStats and import your "skycards_user.json" using the box outlined in the following image:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_1.png?raw=true)
-3. Between your stats and the cards, click the "Registrations" tab:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_2.png?raw=true)
-4. Scroll down till you can see the "Export Registrations CSV" button at the bottom right. Click the button, then after the file is downloaded move it to the folder where you have the "skycards_converter.py" tool.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_3.png?raw=true)
+2. Go to SkyStats and import your "skycards_user.json" using the box outlined in the following image:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_1.png)
+3. Between your stats and the cards, click the "Registrations" tab:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_2.png)
+4. Scroll down till you can see the "Export Registrations CSV" button at the bottom right. Click the button, then after the file is downloaded move it to the folder where you have the "skycards_converter.py" tool.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/skystats_import_3.png)
 
 ## TrackMySkyCards Import
-1. From your TrackMySkyCards dashboard, click the "Account" tab at the bottom right:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_1.png?raw=true)
-2. Click the "Choose CSV/TSV file" button, then navigate to your skycards converter folder and select the "TrackMySkyCards_Import.csv" file:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_2.png?raw=true)
-3. The button should change to say "Choose a different file" and show "Selected file: TrackMySkyCards_Import.csv" directly under it, as well as "Parsed ### rows. Ready to import" at the bottom left.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_3.png?raw=true)
-4. Click "Import CSV", then wait for the file to be processed. When completed, a status box will appear at the top right of the page noting how many rows were successfully imported and, if any failed, a count of how many rows failed.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_4.png?raw=true)
+1. From your TrackMySkyCards dashboard, click the "Account" tab at the bottom right:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_1.png)
+2. Click the "Choose CSV/TSV file" button, then navigate to your skycards converter folder and select the "TrackMySkyCards_Import.csv" file:![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_2.png)
+3. The button should change to say "Choose a different file" and show "Selected file: TrackMySkyCards_Import.csv" directly under it, as well as "Parsed ### rows. Ready to import" at the bottom left.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_3.png)
+4. Click "Import CSV", then wait for the file to be processed. When completed, a status box will appear at the top right of the page noting how many rows were successfully imported and, if any failed, a count of how many rows failed.![image](https://github.com/crazybob1215/TrackMySkyCards-Import-Generator/blob/main/images/trackmyskycards_import_4.png)
 
 ## Troubleshooting
 ### TrackMySkyCards # rows failed to import
