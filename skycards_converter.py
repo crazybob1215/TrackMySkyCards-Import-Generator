@@ -9,7 +9,7 @@ from colorama import Fore
 
 def Get_hex_from_reg(reg: str):
     # This function tries to convert the aircraft registration to the Mode-S hex ID
-    print(Fore.WHITE + "New registration, converting to hex...")
+    print(Fore.WHITE + "ICAO is unknown, converting registration to Mode-S hex...")
     url = f'https://hexdb.io/reg-hex?reg={reg}'
     response = requests.get(url)
     details = response.text
@@ -21,38 +21,76 @@ def Get_info_from_hex(hex: str):
     print(Fore.WHITE + "Hex conversion success, getting ICAO...")
     url = f'https://hexdb.io/api/v1/aircraft/{hex}'
     response = requests.get(url)
-    details = response.json()
-    response.close()
-    return details['ICAOTypeCode']
+    try:
+        details = response.json()
+    except json.JSONDecodeError:
+        icao = "n/a"
+        return icao
+    else:
+        try:
+            return details['ICAOTypeCode']
+        except KeyError:
+            icao = "n/a"
+            return icao
+    finally:
+        response.close()
 
-def skystats_smasher(reg: str, caughtDB):
+def convert_from_reg(reg: str):
+    print(Fore.WHITE + "Trying to get the ICAO type for "+reg+" from hexdb...")
+    # This function tries to convert the aircraft registration to the ICAO via hexdb's free api
+    url = f'https://hexdb.io/reg-hex?reg={reg}'
+    response = requests.get(url)
+    hex = response.text
+    response.close()
+    
+    if hex == "n/a":
+        print(Fore.RED + reg+" couldn't be converted via hexdb. It will need to be checked manually.\n")
+        icao = "n/a"
+    else:
+        url = f'https://hexdb.io/api/v1/aircraft/{hex}'
+        response = requests.get(url)
+        try:
+            details = response.json()
+        except json.JSONDecodeError:
+            icao = "n/a"
+        else:
+            try:
+                icao = details['ICAOTypeCode']
+            except KeyError:
+                icao = "n/a"
+        finally:
+            response.close()
+    if icao == "n/a":
+        print(Fore.RED + reg+" couldn't be converted via hexdb. It will need to be checked manually.\n")
+    return icao
+
+def skystats_smasher(reg: str, caughtDB, mainRegFile):
     # This function runs if the hexdb conversion fails to return either the Mode-S hex ID or the ICAO type code.
     # This depends on the user generating a "registrations.csv" export from the skystats.win site.
     try:
         skystatsFile = working_path+'\\registrations.csv'
         skystatsRegs = pd.read_csv(skystatsFile, keep_default_na=False)
     except FileNotFoundError:
-        print(Fore.RED + "No SkyStats export found. ICAO type will need to be found manually!\n")
-        icao = "n/a"
-        return icao
+        print(Fore.RED + "No SkyStats export found!")
+        icao = convert_from_reg(reg) # this is going to either return a good ICAO or an "n/a"
     else:
         print(Fore.WHITE + "Checking against SkyStats export...")
-        index = 0
-        icao = ""
-        for skystatsReg in skystatsRegs['Registration']:
-            if reg == skystatsReg:
-                icao = skystatsRegs['Aircraft ID'][index]
-                if icao == "":
-                    print(Fore.RED + "SkyStats doesn't know what "+reg+" is... womp womp\n")
-                    icao = "n/a"
-                    break 
-                print(Fore.GREEN + "Found "+reg+" is a(n) "+icao+"!\n")
-                # Update the user's db with the found ICAO type
-                caughtDB.loc[(caught['registration'] == reg).idxmax(), 'icao'] = icao
-                caughtDB.to_csv(mainRegFile, index=False)
-                break
-            else:
-                index += 1
+        try:
+            # try to find the reg in the skystats registrations export
+            icao = skystatsRegs.loc[(skystatsRegs['Registration'] == reg), 'Aircraft ID'].iloc[0]
+        except IndexError:
+            # the registration wasn't found. This means the user either didn't pull a fresh export from skystats, or they placed it in the wrong location. Or skystats changed the naming of the file...
+            print(Fore.RED + reg+" doesn't exist in the SkyStats export. Did you pull a fresh copy and place it in the right location?")
+        
+        if icao == "":
+            print(Fore.YELLOW + "SkyStats doesn't know what "+reg+" is.")
+            icao = convert_from_reg(reg) # this is going to either return a good ICAO or an "n/a"
+    finally:
+        # no matter what is returned, update the record in caught_registrations
+        caughtDB.loc[(caught['registration'] == reg), 'icao'] = icao
+        with open(mainRegFile, 'w', newline='') as file:
+                caughtDB.to_csv(file, index=False)
+        #caughtDB.to_csv(mainRegFile, index=False)
         return icao
 
 
@@ -79,57 +117,42 @@ if __name__ == '__main__':
     except FileNotFoundError:
         print(Fore.RED + "Personal registrations db doesn't exist. Creating a blank copy to build on...\n")
         header = ("registration","hex","icao")
-        with open(mainRegFile, 'a+', newline='') as orf:
-            csvwriter = csv.writer(orf)
+        with open(mainRegFile, 'a+', newline='') as file:
+            csvwriter = csv.writer(file)
             csvwriter.writerow(header)
             print(Fore.GREEN + "Success!\n")
 
     # build a list of types and how many times they've been caught
     types = {}
     for reg in regs:
-        if reg['reg'] == "SKY-CARDS":
+        reg = reg['reg']
+        #reg = "F-PDHZ"
+        if reg == "SKY-CARDS":
             continue
-        print(Fore.YELLOW + "Checking registration code: "+reg['reg'])
+        print(Fore.YELLOW + "Checking registration code: "+reg)
         # check if the registration has already been caught by the player previously
-        index = 0
-        icao = ""
-        for existingReg in caught['registration']:
-            doNotAdd = False
-            if reg['reg'] == existingReg:
-                icao = caught['icao'][index]
-                doNotAdd = True
-                if icao == "n/a":
-                    print(Fore.YELLOW + reg['reg']+" has been checked previously, but the ICAO type is not known.")
-                    icao = skystats_smasher(reg['reg'], caught)
-                else:
-                    print(Fore.WHITE + existingReg+" has already been checked previously.\n")
-                break
-            else:
-                index += 1
+        try:
+            icao = caught.loc[(caught['registration'] == reg), 'icao'].iloc[0]
+        except IndexError:
+            newRow = pd.DataFrame({'registration':[reg], 'hex':["n/a"], 'icao':["n/a"]})
+            with open(mainRegFile, 'a+', newline='') as file:
+                newRow.to_csv(file, index=False, header=False)
+            caught = pd.read_csv(mainRegFile, keep_default_na=False)
+            icao = ""
+
+        if icao == "n/a":
+            print(Fore.YELLOW + reg+" has been checked previously, but the ICAO type is not known.")
+            icao = skystats_smasher(reg, caught, mainRegFile)
+        elif icao == "":
+            print(Fore.YELLOW + reg+" has not been checked yet.")
+            icao = skystats_smasher(reg, caught, mainRegFile)
         
-        if icao == "":
-            # This runs when the reg doesn't exist in "caught_registrations.csv"
-            hex = Get_hex_from_reg(reg['reg'])
-            if hex != "n/a":
-                icao = Get_info_from_hex(hex)
-                if icao == "n/a":
-                    print(Fore.RED + "Couldn't get the ICAO type code.")
-                    icao = skystats_smasher(reg['reg'], caught)
-                else:
-                    print(Fore.GREEN + reg['reg']+" is a(n) "+icao+"\n")
-            else:
-                print(Fore.RED + "Couldn't get the Mode-S hex code.")
-                icao = skystats_smasher(reg['reg'], caught)
         if icao != "n/a":
+            print(Fore.GREEN + reg+" is a(n) "+icao+"\n")
             if icao in types:
                 types[icao]["Registrations Caught"] += 1
             else:
                 types[icao] = {"Registrations Caught":1, "Glow Count":0, "Tier":"paper"}
-        if doNotAdd == False:
-            newRow = (reg['reg'],hex,icao)
-            with open(mainRegFile, 'a+', newline='') as orf:
-                csvwriter = csv.writer(orf)
-                csvwriter.writerow(newRow)
 
     # Get info from the SkyCards cards, like glow count and tier
     for card in cards:
